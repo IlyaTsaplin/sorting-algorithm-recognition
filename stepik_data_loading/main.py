@@ -50,7 +50,7 @@ def main():
         exit(1)
 
     # Step_id list
-    STEP_ID_LIST = [3555515]
+    STEP_ID_LIST = []
     # Path to saved data directory
     PATH = Path('./data')
 

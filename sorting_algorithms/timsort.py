@@ -56,7 +56,7 @@ def merge(array, l, m, r):
         j += 1
 
 
-def timsort(array):
+def sort(array):
     n = len(array)
     minrun = find_minrun(n)
 

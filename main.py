@@ -1,64 +1,66 @@
-import sys
-import random
 import pandas as pd
-from identification.sorting_identification import count_comparisons, measure_algorithm
-from sorting_algorithms.quicksort import quick_sort
-from sorting_algorithms.mergesort import merge_sort
-from sorting_algorithms.insertionsort import insertion_sort
-from sorting_algorithms.timsort import timsort
+from pathlib import Path
+from sklearn import tree
+from classes.performance_analyser import PerformanceAnalyser, ErrorInSorting
+from classes.syntax_analyser import SyntaxAnalyser
 from matplotlib import pyplot as plt
 
 
-def plot_comparisons():
-    N_LIMIT = 1000
-    sys.setrecursionlimit(1500)
-    fig, axs = plt.subplots(3, 2)
-    row = 0
-    col = 0
-    for sorting_algorithm in [quick_sort, merge_sort, insertion_sort, timsort, default_sort]:
-        results_for_sorted = []
-        results_for_reversed = []
-        results_for_shuffled = []
-        for i in range(N_LIMIT):
-            data = [x for x in range(i)]
-            results_for_sorted.append(count_comparisons(sorting_algorithm, data))
-            data.reverse()
-            results_for_reversed.append(count_comparisons(sorting_algorithm, data))
-            random.shuffle(data)
-            results_for_shuffled.append(count_comparisons(sorting_algorithm, data))
-        axs[row, col].plot(range(N_LIMIT), results_for_sorted, label='sorted')
-        axs[row, col].plot(range(N_LIMIT), results_for_reversed, label='reversed')
-        axs[row, col].plot(range(N_LIMIT), results_for_shuffled, label='shuffled')
-        axs[row, col].legend()
-        axs[row, col].grid()
-        axs[row, col].set_xlabel('Number of elements')
-        axs[row, col].set_ylabel('Number of comparisons')
-        axs[row, col].set_title(sorting_algorithm.__name__)
+def get_algorithm_characteristics(path_to_algorithm: Path):
+    """
+    Extracts performance and syntax characteristics of given sorting algorithm
+    params
+    """
+    module = __import__(f'{".".join(path_to_algorithm.parts[:-1])}.{path_to_algorithm.stem}',
+                        fromlist=['sort'])
 
-        col = (col + 1) % 2
-        if col == 0:
-            row += 1
-    fig.tight_layout()
-    plt.show()
+    characteristics_df = PerformanceAnalyser.measure_algorithm(getattr(module, 'sort'))
 
+    # Syntax
+    with open(path_to_algorithm) as in_stream:
+        code = in_stream.read()
+        characteristics_df['is_recursive'] = SyntaxAnalyser.get_recursive_functions(code) != set()
 
-def default_sort(data):
-    sorted_data = sorted(data)
-    for i in range(len(data)):
-        data[i] = sorted_data[i]
+    return characteristics_df
 
 
 def main():
-    df = measure_algorithm(quick_sort)
-    df = pd.concat([df, measure_algorithm(merge_sort)])
-    df = pd.concat([df, measure_algorithm(insertion_sort)])
-    df = pd.concat([df, measure_algorithm(timsort)])
-    df = pd.concat([df, measure_algorithm(default_sort)])
+    sorting_df = pd.DataFrame()
+    path_to_data = Path('./data')
+    for path in path_to_data.iterdir():
+        if path.is_dir():
+            performance_df = pd.DataFrame()
+
+            for implementation in path.glob('*.py'):
+                try:
+                    current_df = get_algorithm_characteristics(implementation)
+                except AssertionError:
+                    # Handle incorrect algorithm
+                    print(f'Sorting algorithm from {implementation} is not correct')
+                    continue
+                except AttributeError:
+                    # Handle missing sort function
+                    print(f'Sorting algorithm from {implementation} is missing sort function')
+                    continue
+                except ErrorInSorting:
+                    raise ErrorInSorting
+                performance_df = pd.concat([performance_df, current_df])
+
+            performance_df = performance_df.assign(sorting_algorithm=path.name)
+            sorting_df = pd.concat([sorting_df, performance_df])
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-        print(df)
+        print(sorting_df)
 
-    # plot_comparisons()
+    if len(sorting_df) != 0:
+        y = sorting_df['sorting_algorithm']
+        X = sorting_df.drop('sorting_algorithm', axis=1)
+        clf = tree.DecisionTreeClassifier(max_depth=5)
+        clf = clf.fit(X, y)
+        _ = plt.figure(figsize=(15, 20))
+        _ = tree.plot_tree(clf, filled=True,
+                           feature_names=X.columns, class_names=list(y))
+        plt.show()
 
 
 if __name__ == '__main__':

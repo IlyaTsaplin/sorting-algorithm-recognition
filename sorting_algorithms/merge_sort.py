@@ -53,7 +53,7 @@ def merge(arr, l, m, r):
 # l is for left index and r is right index of the
 # sub-array of arr to be sorted
 
-def merge_sort(arr, left=None, right=None):
+def sort(arr, left=None, right=None):
     if left is None:
         left = 0
     if right is None:
@@ -65,7 +65,7 @@ def merge_sort(arr, left=None, right=None):
         middle = left + (right - left) // 2
 
         # Sort first and second halves
-        merge_sort(arr, left, middle)
-        merge_sort(arr, middle + 1, right)
+        sort(arr, left, middle)
+        sort(arr, middle + 1, right)
 
         merge(arr, left, middle, right)

@@ -1,4 +1,7 @@
 class Element:
+    """
+    Class that keeps count of how many times instances were compared
+    """
     comparison_counter = 0
 
     @classmethod

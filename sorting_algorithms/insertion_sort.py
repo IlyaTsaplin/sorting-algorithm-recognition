@@ -1,5 +1,5 @@
 # Insertion sort in Python
-def insertion_sort(array):
+def sort(array):
     for step in range(1, len(array)):
         key = array[step]
         j = step - 1

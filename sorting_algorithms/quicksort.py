@@ -35,7 +35,7 @@ def partition(array, low, high):
 # function to perform quicksort
 
 
-def quick_sort(array, low=None, high=None):
+def sort(array, low=None, high=None):
     if low is None:
         low = 0
     if high is None:
@@ -48,7 +48,7 @@ def quick_sort(array, low=None, high=None):
         pi = partition(array, low, high)
 
         # Recursive call on the left of pivot
-        quick_sort(array, low, pi - 1)
+        sort(array, low, pi - 1)
 
         # Recursive call on the right of pivot
-        quick_sort(array, pi + 1, high)
+        sort(array, pi + 1, high)

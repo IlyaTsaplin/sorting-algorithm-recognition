@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from sklearn import tree
+from sklearn.model_selection import KFold, cross_val_score
 from classes.performance_analyser import PerformanceAnalyser, ErrorInSorting
 from classes.syntax_analyser import SyntaxAnalyser
 from matplotlib import pyplot as plt
@@ -19,7 +20,7 @@ def get_algorithm_characteristics(path_to_algorithm: Path):
     # Syntax
     with open(path_to_algorithm) as in_stream:
         code = in_stream.read()
-        characteristics_df['is_recursive'] = SyntaxAnalyser.get_recursive_functions(code) != set()
+        characteristics_df['is_recursive'] = 'sort' in SyntaxAnalyser.get_recursive_functions(code)
 
     return characteristics_df
 
@@ -31,7 +32,9 @@ def main():
         if path.is_dir():
             performance_df = pd.DataFrame()
 
-            for implementation in path.glob('*.py'):
+            implementations = path.glob('*.py')
+            current_df = None
+            for implementation in implementations:
                 try:
                     current_df = get_algorithm_characteristics(implementation)
                 except AssertionError:
@@ -44,22 +47,33 @@ def main():
                     continue
                 except ErrorInSorting:
                     raise ErrorInSorting
+                current_df['filename'] = implementation.name
                 performance_df = pd.concat([performance_df, current_df])
 
-            performance_df = performance_df.assign(sorting_algorithm=path.name)
-            sorting_df = pd.concat([sorting_df, performance_df])
+            if current_df is not None:
+                performance_df = performance_df.assign(sorting_algorithm=path.name)
+                sorting_df = pd.concat([sorting_df, performance_df])
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
         print(sorting_df)
 
     if len(sorting_df) != 0:
-        y = sorting_df['sorting_algorithm']
-        X = sorting_df.drop('sorting_algorithm', axis=1)
-        clf = tree.DecisionTreeClassifier(max_depth=5)
-        clf = clf.fit(X, y)
+        algorithms = list(sorting_df['sorting_algorithm'].unique())
+        targets = []
+        for value in sorting_df['sorting_algorithm'].values:
+            index = algorithms.index(value)
+            targets.append(index)
+        X = sorting_df.drop(['sorting_algorithm', 'filename'], axis=1)
+        clf = tree.DecisionTreeClassifier(max_depth=4)
+
+        scores = cross_val_score(clf, X, targets, cv=KFold(n_splits=5))
+
+        print(scores)
+        print(scores.mean())
+
+        clf = clf.fit(X, targets)
         _ = plt.figure(figsize=(15, 20))
-        _ = tree.plot_tree(clf, filled=True,
-                           feature_names=X.columns, class_names=list(y))
+        _ = tree.plot_tree(clf, filled=True, feature_names=X.columns, class_names=algorithms)
         plt.show()
 
 

@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from sklearn import tree
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import cross_val_score, RepeatedKFold
 from classes.performance_analyser import PerformanceAnalyser, ErrorInSorting
 from classes.syntax_analyser import SyntaxAnalyser
 from matplotlib import pyplot as plt
@@ -66,7 +66,7 @@ def main():
         X = sorting_df.drop(['sorting_algorithm', 'filename'], axis=1)
         clf = tree.DecisionTreeClassifier(max_depth=4)
 
-        scores = cross_val_score(clf, X, targets, cv=KFold(n_splits=5))
+        scores = cross_val_score(clf, X, targets, cv=RepeatedKFold(n_splits=5,  n_repeats=20))
 
         print(scores)
         print(scores.mean())

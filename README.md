@@ -1,5 +1,5 @@
 # Инструкция для загрузки кодов решений со Stepik
-Скрипт для загрузки: /stepik_data_loading/main.py
+Скрипт для загрузки: /utils/stepik_data_loading.py
 1. Перейти на https://stepik.org/oauth2/applications
 2. Добавить новое приложение со следующими параметрами
 * Сlient type: confidential

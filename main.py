@@ -19,14 +19,16 @@ def get_algorithm_characteristics(path_to_algorithm: Path):
     module = __import__(f'{".".join(path_to_algorithm.parts[:-1])}.{path_to_algorithm.stem}',
                         fromlist=['sort'])
 
-    characteristics_df = PerformanceAnalyser.measure_algorithm(getattr(module, 'sort'))
+    performance_characteristics = PerformanceAnalyser.measure_algorithm(getattr(module, 'sort'))
 
     # Syntax
     with open(path_to_algorithm) as in_stream:
         code = in_stream.read()
-        characteristics_df['is_recursive'] = 'sort' in SyntaxAnalyser.get_recursive_functions(code)
+        syntax_characteristics = SyntaxAnalyser.analyze(code)
 
-    return characteristics_df
+        all_characteristics = performance_characteristics.join(syntax_characteristics)
+
+    return all_characteristics
 
 
 def main():

@@ -94,7 +94,7 @@ class PerformanceAnalyser:
         """
         Measures sorting algorithm characteristics
         :param algorithm: sorting function
-        :return: Dataframe (comparisons_sorted, comparisons_reversed, comparisons_shuffled, is_stable)
+        :return: Dataframe containing performance characteristics
         """
         collected_data = pd.DataFrame()
 

@@ -1,11 +1,39 @@
 import ast
-from classes.recursive_functions_finder import RecursiveFunctionsFinder
+
+import pandas as pd
 
 
 class SyntaxAnalyser:
     """
     Class for syntax analysis of sorting algorithms
     """
+    class RecursiveFunctionsFinder(ast.NodeVisitor):
+        """
+        AST node visitor for finding recursive functions
+        """
+        def __init__(self):
+            self._current_func = None
+            self.recursive_funcs = set()
+
+        def generic_visit(self, node):
+            if node.__class__ is ast.FunctionDef:
+                self._current_func = node.name
+            if node.__class__ is ast.Call and hasattr(node.func, 'id') and node.func.id == self._current_func:
+                self.recursive_funcs.add(self._current_func)
+            super(self.__class__, self).generic_visit(node)
+
+    class CycleCounter(ast.NodeVisitor):
+        """
+        Class for counting cycles in code
+        """
+        def __init__(self):
+            self.counter = 0
+
+        def generic_visit(self, node):
+            if (node.__class__ is ast.For) or (node.__class__ is ast.While):
+                self.counter += 1
+            super(self.__class__, self).generic_visit(node)
+
     @staticmethod
     def get_recursive_functions(code):
         """
@@ -14,6 +42,32 @@ class SyntaxAnalyser:
         :return: Set of function names that are recursive
         """
         tree = ast.parse(code)
-        finder = RecursiveFunctionsFinder()
+        finder = SyntaxAnalyser.RecursiveFunctionsFinder()
         finder.visit(tree)
         return finder.recursive_funcs
+
+    @staticmethod
+    def count_cycles(code):
+        """
+        Count all for and while cycles in code
+        @param code: Python code string
+        @return: Number of cycles
+        """
+        tree = ast.parse(code)
+        cycle_counter = SyntaxAnalyser.CycleCounter()
+        cycle_counter.visit(tree)
+        return cycle_counter.counter
+
+    @staticmethod
+    def analyze(code):
+        """
+        Extract syntax characteristics from Python code string
+        @param code: Python code string
+        @return: Dataframe containing syntax characteristics
+        """
+        syntax_characteristics = pd.DataFrame()
+
+        syntax_characteristics['is_recursive'] = ['sort' in SyntaxAnalyser.get_recursive_functions(code)]
+        syntax_characteristics['number_of_cycles'] = [SyntaxAnalyser.count_cycles(code)]
+
+        return syntax_characteristics

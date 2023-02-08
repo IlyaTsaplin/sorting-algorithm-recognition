@@ -26,11 +26,19 @@ class SyntaxAnalyser:
         Class for counting cycles in code
         """
         def __init__(self):
-            self.counter = 0
+            self.cycles = 0
+            self.inner_cycles = 0
 
         def generic_visit(self, node):
+            # Iterate over For and While elements
             if (node.__class__ is ast.For) or (node.__class__ is ast.While):
-                self.counter += 1
+                self.cycles += 1
+
+                # Count inner cycles for given loop
+                for inner_node in node.body:
+                    if (inner_node.__class__ is ast.For) or (inner_node.__class__ is ast.While):
+                        self.inner_cycles += 1
+
             super(self.__class__, self).generic_visit(node)
 
     @staticmethod
@@ -50,12 +58,12 @@ class SyntaxAnalyser:
         """
         Count all for and while cycles in code
         @param code: Python code string
-        @return: Number of cycles
+        @return: Tuple (number_of_cycles, number_of_inner_cycles)
         """
         tree = ast.parse(code)
         cycle_counter = SyntaxAnalyser.CycleCounter()
         cycle_counter.visit(tree)
-        return cycle_counter.counter
+        return cycle_counter.cycles, cycle_counter.inner_cycles
 
     @staticmethod
     def analyze(code):
@@ -67,6 +75,8 @@ class SyntaxAnalyser:
         syntax_characteristics = pd.DataFrame()
 
         syntax_characteristics['is_recursive'] = ['sort' in SyntaxAnalyser.get_recursive_functions(code)]
-        syntax_characteristics['number_of_cycles'] = [SyntaxAnalyser.count_cycles(code)]
+        cycles, inner_cycles = SyntaxAnalyser.count_cycles(code)
+        syntax_characteristics['number_of_cycles'] = [cycles]
+        syntax_characteristics['number_of_inner_cycles'] = [inner_cycles]
 
         return syntax_characteristics

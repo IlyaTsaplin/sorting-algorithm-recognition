@@ -24,9 +24,15 @@ class PerformanceAnalyser:
                                  47, 21, 42, 54, 7, 12, 100, 18, 89, 28, 5, 73, 81, 68, 77, 87, 9, 3, 15, 81, 24, 77,
                                  73, 15, 50, 11, 47, 14, 4, 77, 2, 24, 23, 91, 15, 61, 26, 93, 7, 86, 2, 69, 54, 79, 12,
                                  33, 8, 28, 9, 82, 38, 44, 55, 23, 7, 64]
+    nearly_sorted_elements = [1, 2, 0, 7, 3, 5, 6, 4, 8, 9, 10, 12, 13, 11, 15, 14, 17, 16, 18, 19, 20, 21, 22, 24, 23,
+                              25, 27, 29, 26, 28, 30, 32, 31, 34, 33, 36, 35, 37, 38, 43, 41, 40, 42, 39, 44, 46, 45,
+                              47, 49, 48, 51, 50, 52, 54, 53, 55, 57, 56, 58, 59, 60, 62, 64, 61, 63, 66, 65, 67, 68,
+                              69, 71, 70, 72, 73, 74, 75, 79, 76, 77, 80, 83, 82, 81, 78, 85, 84, 87, 86, 88, 89, 92,
+                              91, 90, 94, 93, 95, 97, 96, 98, 99]
 
     ordered_data = [Element(x, x) for x in range(100)]
     shuffled_data = [Element(shuffled_element, i) for i, shuffled_element in enumerate(shuffled_elements)]
+    nearly_sorted_data = [Element(x, i) for i, x in enumerate(nearly_sorted_elements)]
     stable_check_data = [Element(element, i) for i, element in enumerate(elements_for_stable_check)]
 
     @classmethod
@@ -90,16 +96,16 @@ class PerformanceAnalyser:
         :param algorithm: sorting function
         :return: Dataframe (comparisons_sorted, comparisons_reversed, comparisons_shuffled, is_stable)
         """
-        data = cls.ordered_data.copy()
-        comparisons_sorted = PerformanceAnalyser.count_comparisons(algorithm, data)
-        data.reverse()
-        comparisons_reversed = PerformanceAnalyser.count_comparisons(algorithm, data)
-        data = cls.shuffled_data.copy()
-        comparisons_shuffled = PerformanceAnalyser.count_comparisons(algorithm, data)
-        is_stable = PerformanceAnalyser.check_stability(algorithm)
+        collected_data = pd.DataFrame()
 
-        return pd.DataFrame(
-            data={'Comparisons on sorted data': [comparisons_sorted],
-                  'Comparisons on reversed data': [comparisons_reversed],
-                  'Comparisons on shuffled data': [comparisons_shuffled],
-                  'is_stable': is_stable})
+        collected_data['Comparisons on sorted data'] = [PerformanceAnalyser.count_comparisons(algorithm,
+                                                                                              cls.ordered_data)]
+        collected_data['Comparisons on reversed data'] = PerformanceAnalyser.count_comparisons(algorithm,
+                                                                                               cls.ordered_data[::-1])
+        collected_data['Comparisons on shuffled data'] = PerformanceAnalyser.count_comparisons(algorithm,
+                                                                                               cls.shuffled_data)
+        collected_data['Comparisons on nearly sorted data'] = PerformanceAnalyser. \
+            count_comparisons(algorithm, cls.nearly_sorted_data)
+        collected_data['is_stable'] = PerformanceAnalyser.check_stability(algorithm)
+
+        return collected_data

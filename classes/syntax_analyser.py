@@ -27,17 +27,17 @@ class SyntaxAnalyser:
         """
         def __init__(self):
             self.cycles = 0
-            self.inner_cycles = 0
+            self.nested_cycles = 0
 
         def generic_visit(self, node):
             # Iterate over For and While elements
             if (node.__class__ is ast.For) or (node.__class__ is ast.While):
                 self.cycles += 1
 
-                # Count inner cycles for given loop
+                # Count nested cycles inside current cycle
                 for inner_node in node.body:
                     if (inner_node.__class__ is ast.For) or (inner_node.__class__ is ast.While):
-                        self.inner_cycles += 1
+                        self.nested_cycles += 1
 
             super(self.__class__, self).generic_visit(node)
 
@@ -63,7 +63,7 @@ class SyntaxAnalyser:
         tree = ast.parse(code)
         cycle_counter = SyntaxAnalyser.CycleCounter()
         cycle_counter.visit(tree)
-        return cycle_counter.cycles, cycle_counter.inner_cycles
+        return cycle_counter.cycles, cycle_counter.nested_cycles
 
     @staticmethod
     def analyze(code):
@@ -75,8 +75,8 @@ class SyntaxAnalyser:
         syntax_characteristics = pd.DataFrame()
 
         syntax_characteristics['is_recursive'] = ['sort' in SyntaxAnalyser.get_recursive_functions(code)]
-        cycles, inner_cycles = SyntaxAnalyser.count_cycles(code)
+        cycles, nested_cycles = SyntaxAnalyser.count_cycles(code)
         syntax_characteristics['number_of_cycles'] = [cycles]
-        syntax_characteristics['number_of_inner_cycles'] = [inner_cycles]
+        syntax_characteristics['number_of_nested_cycles'] = [nested_cycles]
 
         return syntax_characteristics

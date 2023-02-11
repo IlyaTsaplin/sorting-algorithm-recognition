@@ -25,10 +25,11 @@ def nearly_sorted(sorted_array, number_of_swaps = None):
 if __name__ == '__main__':
     arr = [x for x in range(100)]
     nearly_sorted = nearly_sorted(arr, len(arr))
-    plt.bar(range(len(arr)), arr)
-    plt.bar(range(len(arr)), nearly_sorted)
     print(arr)
     print(nearly_sorted)
+    plt.bar(range(len(arr)), arr, label='sorted')
+    plt.bar(range(len(arr)), nearly_sorted, label='nearly_sorted')
+    plt.legend()
     plt.show()
 
 

@@ -1,9 +1,10 @@
 import pandas as pd
 from pathlib import Path
-from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import cross_val_score, RepeatedKFold
-from classes.performance_analyser import PerformanceAnalyser, ErrorInSorting
-from classes.syntax_analyser import SyntaxAnalyser
+from classes.performance_analysis import PerformanceAnalyser
+from classes.syntax_analysis import SyntaxAnalyser
+from classes.exceptions import ErrorInSorting, NoSortMethod, IncorrectSorting
 from matplotlib import pyplot as plt
 
 
@@ -16,8 +17,11 @@ def get_algorithm_characteristics(path_to_algorithm: Path):
     @param path_to_algorithm: path to source code of sorting algorithm
     @return: Dataframe containing algorithm characteristics
     """
-    module = __import__(f'{".".join(path_to_algorithm.parts[:-1])}.{path_to_algorithm.stem}',
-                        fromlist=['sort'])
+    try:
+        module = __import__(f'{".".join(path_to_algorithm.parts[:-1])}.{path_to_algorithm.stem}',
+                            fromlist=['sort'])
+    except AttributeError:
+        raise NoSortMethod(Path)
 
     performance_characteristics = PerformanceAnalyser.measure_algorithm(getattr(module, 'sort'))
 
@@ -36,33 +40,34 @@ def main():
     sorting_df = pd.DataFrame()
     path_to_data = Path(PATH_TO_IMPLEMENTATIONS)
 
-    # Iterate over different directories for different soring algorithms
+    # Iterate over different directories for different sorting algorithms
     for path in path_to_data.iterdir():
         if path.is_dir():
-            performance_df = pd.DataFrame()
+            current_algorithm_df = pd.DataFrame()
             implementations = path.glob('*.py')
-            current_df = None
 
             # Iterate over implementations
             for implementation in implementations:
                 try:
-                    current_df = get_algorithm_characteristics(implementation)
-                except AssertionError:
+                    current_implementation_df = get_algorithm_characteristics(implementation)
+                except IncorrectSorting:
                     # Handle incorrect algorithm
                     print(f'Sorting algorithm from {implementation} is not correct')
                     continue
-                except AttributeError:
+                except NoSortMethod:
                     # Handle missing sort function
                     print(f'Sorting algorithm from {implementation} is missing sort function')
                     continue
                 except ErrorInSorting:
-                    raise ErrorInSorting
-                current_df['filename'] = implementation.name
-                performance_df = pd.concat([performance_df, current_df])
+                    # Handle error in provided source code
+                    print(f'Sorting algorithm  {implementation} raised an exception')
+                    continue
 
-            if current_df is not None:
-                performance_df = performance_df.assign(sorting_algorithm=path.name)
-                sorting_df = pd.concat([sorting_df, performance_df])
+                current_implementation_df['filename'] = implementation.name
+                current_algorithm_df = pd.concat([current_algorithm_df, current_implementation_df])
+
+            current_algorithm_df = current_algorithm_df.assign(sorting_algorithm=path.name)
+            sorting_df = pd.concat([sorting_df, current_algorithm_df])
 
     with pd.option_context('display.max_rows', None, 'display.max_columns', None):
         print(sorting_df)
@@ -74,7 +79,7 @@ def main():
             index = algorithms.index(value)
             targets.append(index)
         test = sorting_df.drop(['sorting_algorithm', 'filename'], axis=1)
-        clf = tree.DecisionTreeClassifier(max_depth=4)
+        clf = DecisionTreeClassifier(max_depth=4)
 
         scores = cross_val_score(clf, test, targets, cv=RepeatedKFold(n_splits=5,  n_repeats=20))
 
@@ -83,7 +88,7 @@ def main():
 
         clf = clf.fit(test, targets)
         _ = plt.figure(figsize=(15, 20))
-        _ = tree.plot_tree(clf, filled=True, feature_names=test.columns, class_names=algorithms)
+        _ = plot_tree(clf, filled=True, feature_names=test.columns, class_names=algorithms)
         plt.show()
 
 

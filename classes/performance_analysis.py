@@ -1,13 +1,7 @@
 import copy
 import pandas as pd
 from classes.element import Element
-
-
-class ErrorInSorting(Exception):
-    """
-    Exception for errors in provided sorting algorithm code
-    """
-    pass
+from classes.exceptions import ErrorInSorting, IncorrectSorting
 
 
 class PerformanceAnalyser:
@@ -48,12 +42,13 @@ class PerformanceAnalyser:
 
         try:
             sorting_algorithm(data)
-        except Exception as exception:
-            raise ErrorInSorting(exception)
+        except Exception:
+            raise ErrorInSorting()
 
-        comparison_counter = Element.comparison_counter
-        assert (cls.is_sorted(data))
-        return comparison_counter
+        if not cls.is_sorted(data):
+            raise IncorrectSorting()
+
+        return Element.comparison_counter
 
     @staticmethod
     def is_sorted(data):
@@ -70,10 +65,11 @@ class PerformanceAnalyser:
 
         try:
             sorting_algorithm(data)
-        except Exception as exception:
-            raise ErrorInSorting(exception)
+        except Exception:
+            raise ErrorInSorting()
 
-        assert (cls.is_sorted(data))
+        if not cls.is_sorted(data):
+            raise IncorrectSorting()
         return PerformanceAnalyser.sequential_are_ascending(data)
 
     @staticmethod

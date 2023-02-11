@@ -6,7 +6,7 @@ import sorting_algorithms.merge_sort as merge_sort
 import sorting_algorithms.insertion_sort as insertion_sort
 import sorting_algorithms.timsort as timsort
 import sorting_algorithms.default_sort as default_sort
-from classes.performance_analyser import PerformanceAnalyser
+from classes.performance_analysis import PerformanceAnalyser
 
 
 def plot_comparisons():

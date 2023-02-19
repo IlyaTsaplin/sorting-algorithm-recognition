@@ -42,8 +42,8 @@ class PerformanceAnalyser:
 
         try:
             sorting_algorithm(data)
-        except Exception:
-            raise ErrorInSorting()
+        except Exception as e:
+            raise ErrorInSorting(e)
 
         if not cls.is_sorted(data):
             raise IncorrectSorting()
@@ -65,8 +65,8 @@ class PerformanceAnalyser:
 
         try:
             sorting_algorithm(data)
-        except Exception:
-            raise ErrorInSorting()
+        except Exception as e:
+            raise ErrorInSorting(e)
 
         if not cls.is_sorted(data):
             raise IncorrectSorting()

@@ -2,9 +2,12 @@ class ErrorInSorting(Exception):
     """
     Errors occurred during execution
     """
-    def __init__(self):
+    def __init__(self, exception):
+        self.exception = exception
+
         message = (
             "Error occurred during execution of source code\n"
+            f"{self.exception}\n"
         )
         super().__init__(message)
 

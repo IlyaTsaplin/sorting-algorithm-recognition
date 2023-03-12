@@ -90,11 +90,13 @@ def train_classifier():
         test = sorting_df.drop(['sorting_algorithm', 'filename'], axis=1)
         clf = DecisionTreeClassifier()
         print(algorithms)
-        scores = cross_val_score(clf, test, targets, cv=RepeatedKFold(n_splits=5,  n_repeats=20))
 
+        # Validation
+        scores = cross_val_score(clf, test, targets, cv=RepeatedKFold(n_splits=5,  n_repeats=20))
         print(scores)
         print(scores.mean())
 
+        clf = clf.fit(test, targets)
         # Plot classifier
         clf = clf.fit(test, targets)
         _ = plt.figure(figsize=(15, 20))

@@ -74,7 +74,7 @@ class SyntaxAnalyser:
         """
         syntax_characteristics = pd.DataFrame()
 
-        syntax_characteristics['is_recursive'] = ['sort' in SyntaxAnalyser.get_recursive_functions(code)]
+        syntax_characteristics['is_recursive'] = [len(SyntaxAnalyser.get_recursive_functions(code)) != 0]
         cycles, nested_cycles = SyntaxAnalyser.count_cycles(code)
         syntax_characteristics['number_of_cycles'] = [cycles]
         syntax_characteristics['number_of_nested_cycles'] = [nested_cycles]

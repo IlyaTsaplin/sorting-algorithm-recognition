@@ -1,5 +1,6 @@
-import requests
 from pathlib import Path
+
+import requests
 
 
 def load_step_solutions(step_id, token, data_directory):

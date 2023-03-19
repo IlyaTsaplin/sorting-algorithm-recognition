@@ -35,3 +35,6 @@ class Element:
     def __ne__(self, other):
         Element.comparison_counter += 1
         return self.sorting_criteria != other.sorting_criteria
+
+    def __floordiv__(self, other):
+        return self.sorting_criteria // other

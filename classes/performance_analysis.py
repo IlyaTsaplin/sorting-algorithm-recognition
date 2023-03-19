@@ -1,5 +1,7 @@
 import copy
+
 import pandas as pd
+
 from classes.element import Element
 from classes.exceptions import ErrorInSorting, IncorrectSorting
 
@@ -37,16 +39,16 @@ class PerformanceAnalyser:
         :param data: data for sorting
         :return: Number of comparisons performed
         """
-        data = copy.deepcopy(data)
+        sorted_data = copy.deepcopy(data)
         Element.reset_counter()
 
         try:
-            sorting_algorithm(data)
+            sorting_algorithm(sorted_data)
         except Exception as e:
             raise ErrorInSorting(e)
 
-        if not cls.is_sorted(data):
-            raise IncorrectSorting()
+        if not cls.is_sorted(sorted_data):
+            raise IncorrectSorting(data, sorted_data)
 
         return Element.comparison_counter
 
@@ -61,16 +63,16 @@ class PerformanceAnalyser:
         :param sorting_algorithm:
         :return: Bool value. True if algorithm is stable, False otherwise
         """
-        data = cls.stable_check_data.copy()
+        sorted_data = cls.stable_check_data.copy()
 
         try:
-            sorting_algorithm(data)
+            sorting_algorithm(sorted_data)
         except Exception as e:
             raise ErrorInSorting(e)
 
-        if not cls.is_sorted(data):
-            raise IncorrectSorting()
-        return PerformanceAnalyser.sequential_are_ascending(data)
+        if not cls.is_sorted(sorted_data):
+            raise IncorrectSorting(cls.stable_check_data, sorted_data)
+        return PerformanceAnalyser.sequential_are_ascending(sorted_data)
 
     @staticmethod
     def sequential_are_ascending(data):

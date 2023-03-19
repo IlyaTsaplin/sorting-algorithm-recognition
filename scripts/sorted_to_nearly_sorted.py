@@ -1,8 +1,9 @@
 import random
+
 import matplotlib.pyplot as plt
 
 
-def nearly_sorted(sorted_array, number_of_swaps = None):
+def nearly_sorted(sorted_array, number_of_swaps=None):
     """
     Create nearly sorted array from sorted array
     Performs random swaps between neighbours
@@ -31,5 +32,3 @@ if __name__ == '__main__':
     plt.bar(range(len(arr)), nearly_sorted, label='nearly_sorted')
     plt.legend()
     plt.show()
-
-

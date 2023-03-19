@@ -29,8 +29,11 @@ class IncorrectSorting(Exception):
     """
     Provided sorting algorithm is incorrect
     """
-    def __init__(self):
+    def __init__(self, input_data, incorrect_result):
         message = (
             "Sorting algorithm is incorrect\n"
+            f"Input data: {[elem.sorting_criteria for elem in input_data]}\n"
+            f"Correct result: {[elem.sorting_criteria for elem in sorted(input_data)]}\n"
+            f"Incorrect result: {[elem.sorting_criteria for elem in incorrect_result]}\n"
         )
         super().__init__(message)

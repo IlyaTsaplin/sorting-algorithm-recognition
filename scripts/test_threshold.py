@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from classes.exceptions import IncorrectSorting, ErrorInSorting, NoSortMethod
-from config import ALGORITHMS, PREDICTION_THRESHOLD
+from config import PREDICTION_THRESHOLD
 from scripts.train_forest import get_algorithm_characteristics
 
 if __name__ == '__main__':
@@ -16,10 +16,11 @@ if __name__ == '__main__':
     parser.add_argument('--classifier', help='Path to trained classifier')
     args = parser.parse_args()
 
-    loaded_model = pickle.load(open(Path(args.classifier), 'rb'))
+    loaded_model = pickle.load(open(Path(args.classifier) / 'forest.clf', 'rb'))
+    label_encoder = pickle.load(open(Path(args.classifier) / 'label_encoder.pkl', 'rb'))
     predictions = []
     for path in Path(args.dataset).iterdir():
-        if path.is_dir() and path.name in ALGORITHMS:
+        if path.is_dir() and path.name in label_encoder.classes_:
             implementations = path.glob('*.py')
 
             # Iterate over implementations
@@ -48,7 +49,7 @@ if __name__ == '__main__':
                     print(implementation.name)
                     print("Unknown algorithm")
                     for i, val in enumerate(prediction[0]):
-                        print(f"{ALGORITHMS[i]} - {round(val * 100, 4)}%")
+                        print(f"{label_encoder.inverse_transform([i])[0]} - {round(val * 100, 4)}%")
                     print("---------------------------------------------")
                 predictions.append(current_prediction)
 

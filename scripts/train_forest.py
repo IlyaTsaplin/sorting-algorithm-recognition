@@ -1,9 +1,11 @@
 import argparse
 import pickle
+import shutil
 import traceback
 from pathlib import Path
 
 import pandas as pd
+from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import cross_val_score, RepeatedKFold, HalvingGridSearchCV
@@ -11,7 +13,6 @@ from sklearn.model_selection import cross_val_score, RepeatedKFold, HalvingGridS
 from classes.exceptions import ErrorInSorting, NoSortMethod, IncorrectSorting
 from classes.performance_analysis import PerformanceAnalyser
 from classes.syntax_analysis import SyntaxAnalyser
-from config import ALGORITHMS
 
 
 def get_algorithm_characteristics(path_to_algorithm: Path):
@@ -43,7 +44,7 @@ def collect_data(path_to_data):
 
     # Iterate over different directories for different sorting algorithms
     for path in path_to_data.iterdir():
-        if path.is_dir() and path.name in ALGORITHMS:
+        if path.is_dir():
             current_algorithm_df = pd.DataFrame()
             implementations = path.glob('*.py')
 
@@ -67,13 +68,13 @@ def collect_data(path_to_data):
                     traceback.print_exc()
                     continue
 
-                current_implementation_df['filename'] = implementation.name
                 current_algorithm_df = pd.concat([current_algorithm_df, current_implementation_df])
 
-            current_algorithm_df = current_algorithm_df.assign(sorting_algorithm=path.name)
-            current_algorithm_df['is_stable'] = current_algorithm_df['is_stable'].astype(bool)
-            current_algorithm_df['is_recursive'] = current_algorithm_df['is_recursive'].astype(bool)
-            sorting_df = pd.concat([sorting_df, current_algorithm_df])
+            if not current_algorithm_df.empty:
+                current_algorithm_df = current_algorithm_df.assign(sorting_algorithm=path.name)
+                current_algorithm_df['is_stable'] = current_algorithm_df['is_stable'].astype(bool)
+                current_algorithm_df['is_recursive'] = current_algorithm_df['is_recursive'].astype(bool)
+                sorting_df = pd.concat([sorting_df, current_algorithm_df])
 
     return sorting_df
 
@@ -84,12 +85,10 @@ def train_classifier(dataset_path, output_path):
     sorting_df = collect_data(path_to_data)
 
     if len(sorting_df) != 0:
-        algorithms = sorted(list(sorting_df['sorting_algorithm'].unique()))
-        targets = []
-        for value in sorting_df['sorting_algorithm'].values:
-            index = algorithms.index(value)
-            targets.append(index)
-        test = sorting_df.drop(['sorting_algorithm', 'filename'], axis=1)
+        algorithms = list(sorting_df['sorting_algorithm'].unique())
+        label_encoder = LabelEncoder().fit(algorithms)
+        targets = label_encoder.transform(sorting_df['sorting_algorithm'])
+        test = sorting_df.drop(['sorting_algorithm'], axis=1)
 
         param_grid = {'max_depth': [3, 4, 5, 7, 9]}
         base_estimator = RandomForestClassifier()
@@ -100,7 +99,7 @@ def train_classifier(dataset_path, output_path):
         print(clf)
 
         # Validation
-        scores = cross_val_score(clf, test, targets, cv=RepeatedKFold(n_splits=5, n_repeats=20))
+        scores = cross_val_score(clf, test, targets, cv=RepeatedKFold(n_splits=10, n_repeats=20))
         print(scores.mean())
 
         # Plot classifier
@@ -110,7 +109,13 @@ def train_classifier(dataset_path, output_path):
         #     _ = plot_tree(tree, filled=True, feature_names=test.columns, class_names=algorithms)
         #     plt.show()
 
-        pickle.dump(clf, open(Path(output_path), 'wb'))
+        output_path = Path(output_path) / "classifier"
+        if output_path.exists():
+            shutil.rmtree(output_path)
+        output_path.mkdir(exist_ok=False)
+
+        pickle.dump(clf, open(Path(output_path) / "forest.clf", 'wb'))
+        pickle.dump(label_encoder, open(Path(output_path) / "label_encoder.pkl", 'wb'))
 
 
 if __name__ == '__main__':

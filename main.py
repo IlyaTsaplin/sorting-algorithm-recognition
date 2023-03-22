@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from classes.exceptions import ErrorInSorting, NoSortMethod, IncorrectSorting
-from config import ALGORITHMS, PREDICTION_THRESHOLD
+from config import PREDICTION_THRESHOLD
 from scripts.train_forest import get_algorithm_characteristics
 
 if __name__ == '__main__':
@@ -16,7 +16,11 @@ if __name__ == '__main__':
     parser.add_argument('--classifier', help='Path to trained classifier')
     args = parser.parse_args()
 
-    loaded_model = pickle.load(open(Path(args.classifier), 'rb'))
+    with open(Path(args.classifier) / 'forest.txt', 'r') as txt_file:
+        classifier_string = txt_file.read()
+    loaded_model = pickle.loads(eval(classifier_string))
+    # loaded_model = pickle.load(open(Path(args.classifier) / 'forest.clf', 'rb'))
+    label_encoder = pickle.load(open(Path(args.classifier) / 'label_encoder.pkl', 'rb'))
     try:
         characteristics = get_algorithm_characteristics(Path(args.input))
     except IncorrectSorting as e:
@@ -34,8 +38,8 @@ if __name__ == '__main__':
     else:
         prediction = loaded_model.predict_proba(characteristics)
         if np.max(prediction[0]) > PREDICTION_THRESHOLD:
-            print(f"{ALGORITHMS[np.argmax(prediction[0])]} - {round(np.max(prediction[0]) * 100, 2)}%")
+            print(f"{label_encoder.inverse_transform([np.argmax(prediction[0])])[0]} - {round(np.max(prediction[0]) * 100, 2)}%")
         else:
             print("Unknown algorithm")
             for i, val in enumerate(prediction[0]):
-                print(f"{ALGORITHMS[i]} - {round(val * 100, 2)}%")
+                print(f"{label_encoder.inverse_transform([i])[0]} - {round(val * 100, 2)}%")
